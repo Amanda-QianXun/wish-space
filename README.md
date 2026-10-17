@@ -8,6 +8,7 @@
 - [GitHub Pages](https://amanda-qianxun.github.io/wish-space/)
 
 当前公开版本为 `v1.0.0`。站点默认使用演示数据，无需登录即可体验主要流程。
+仓库中的姓名、生日、邀请码和礼物认领关系均为虚构示例，不对应真实用户。
 
 ## 核心功能
 
