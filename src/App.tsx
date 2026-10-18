@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import {
-  ArrowLeft, Check, ChevronDown, Copy, Gift, Heart, Home, Link2, LockKeyhole,
-  LogOut, MoreHorizontal, PackageCheck, Plus, Search, Sparkles, Star, Users, X,
+  ArrowLeft, ArrowRight, Cake, CalendarDays, Check, ChevronDown, Gift, Heart, Home, Link2, LockKeyhole,
+  LogOut, MoreHorizontal, PackageCheck, Plus, Search, SlidersHorizontal, Sparkles, Star, Users, X,
 } from 'lucide-react'
 import { demoData } from './data/demo'
 import { hasSupabase, supabase } from './lib/supabase'
@@ -9,7 +9,14 @@ import * as backend from './lib/backend'
 import type { AppData, ClaimState, Group, Profile, Wish, WishKind } from './types'
 
 type Tab = 'groups' | 'add' | 'me'
-type Modal = 'group-menu' | 'group-create' | 'group-join' | null
+type Modal = 'group-menu' | 'group-create' | 'group-join' | 'filters' | 'birthdays' | null
+
+interface Filters {
+  category: string
+  kind: 'all' | WishKind
+  budgetMax: number | null
+  priorityMin: number
+}
 
 const STORE_KEY = 'wish-space-demo-v1'
 const USER_KEY = 'wish-space-demo-user'
@@ -23,6 +30,42 @@ function getStoredData() {
     const value = localStorage.getItem(STORE_KEY)
     return value ? JSON.parse(value) as AppData : cloneDemo()
   } catch { return cloneDemo() }
+}
+
+const categories = ['全部', '生活好物', '家居', '穿搭', '数码', '书影音', '体验', '其他']
+
+function birthdayParts(value?: string) {
+  if (!value) return null
+  const match = value.match(/^(?:\d{4}-)?(\d{2})-(\d{2})$/)
+  return match ? { month: Number(match[1]), day: Number(match[2]) } : null
+}
+
+function nextBirthday(value?: string) {
+  const parts = birthdayParts(value)
+  if (!parts) return null
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  let date = new Date(now.getFullYear(), parts.month - 1, parts.day)
+  if (date < today) date = new Date(now.getFullYear() + 1, parts.month - 1, parts.day)
+  const days = Math.round((date.getTime() - today.getTime()) / 86400000)
+  return { date, days, label: `${parts.month}月${String(parts.day).padStart(2, '0')}日` }
+}
+
+function sortedBirthdays(members: Profile[]) {
+  return members.map(member => ({ member, next: nextBirthday(member.birthday) }))
+    .filter((item): item is { member: Profile; next: NonNullable<ReturnType<typeof nextBirthday>> } => Boolean(item.next))
+    .sort((a, b) => a.next.days - b.next.days)
+}
+
+function wishMatches(wish: Wish, filters: Filters) {
+  if (filters.category !== '全部' && wish.category !== filters.category) return false
+  if (filters.kind !== 'all' && wish.kind !== filters.kind) return false
+  if (filters.priorityMin > 1 && wish.priority < filters.priorityMin) return false
+  if (filters.budgetMax !== null) {
+    const amount = wish.kind === 'exact' ? wish.price : wish.budgetMin
+    if (amount && amount > filters.budgetMax) return false
+  }
+  return true
 }
 
 function Avatar({ profile, size = 'md' }: { profile: Profile; size?: 'sm' | 'md' | 'lg' }) {
@@ -142,6 +185,55 @@ function WishDetail({ wish, owner, group, user, claim, onClose, onClaim, onFulfi
   </article></div>
 }
 
+function MemberView({ member, group, wishes, claims, currentUser, filters, onFilters, onCategory, onBack, onOpenWish }: {
+  member: Profile; group: Group; wishes: Wish[]; claims: AppData['claims']; currentUser: Profile; filters: Filters;
+  onFilters: () => void; onCategory: (category: string) => void; onBack: () => void; onOpenWish: (id: string) => void
+}) {
+  const birthday = nextBirthday(member.birthday)
+  const filtered = wishes.filter(w => w.ownerId === member.id && w.groupIds.includes(group.id) && w.status === 'active' && wishMatches(w, filters))
+  return <section className="page member-page">
+    <header className="simple-header"><button className="icon-button" onClick={onBack}><ArrowLeft /></button><p>{group.name}</p><button className="icon-button" onClick={onFilters}><SlidersHorizontal /></button></header>
+    <div className="member-hero">
+      <Avatar profile={member} size="lg" />
+      <div><p className="eyebrow">MEMBER WISH SPACE</p><h1>{member.nickname}的心愿空间</h1><p>{birthday ? `${birthday.label} · ${birthday.days === 0 ? '就是今天' : `还有${birthday.days}天`}` : '还没有登记生日'}</p></div>
+      {birthday && <div className="birthday-medal"><Cake size={19} /><b>{birthday.days}</b></div>}
+    </div>
+    <div className="member-summary"><div><b>{wishes.filter(w => w.ownerId === member.id && w.groupIds.includes(group.id) && w.status === 'active').length}</b><span>正在期待</span></div><div><b>{wishes.filter(w => w.ownerId === member.id && w.status === 'fulfilled').length}</b><span>已经实现</span></div><div><b>{member.id === currentUser.id ? '自己' : '好友'}</b><span>群组关系</span></div></div>
+    <CategoryBar value={filters.category} onChange={onCategory} />
+    <div className="section-heading"><div><p className="eyebrow">WISH LIST</p><h2>{filters.category === '全部' ? '全部心愿' : filters.category}</h2></div><button className="filter-trigger" onClick={onFilters}><SlidersHorizontal size={15} />筛选</button></div>
+    <div className="wish-list">{filtered.map(wish => <WishCard key={wish.id} wish={wish} owner={member} claim={claims.find(c => c.wishId === wish.id && c.groupId === group.id)?.state} isOwner={member.id === currentUser.id} onOpen={() => onOpenWish(wish.id)} />)}</div>
+    {!filtered.length && <div className="empty"><Heart /><h3>暂时没有符合条件的心愿</h3><p>换一个类别或筛选条件看看。</p></div>}
+  </section>
+}
+
+function CategoryBar({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return <div className="category-scroll" aria-label="按类别筛选">{categories.map(category => <button key={category} className={value === category ? 'active' : ''} onClick={() => onChange(category)}>{category}</button>)}</div>
+}
+
+function FilterSheet({ value, onChange, onClose }: { value: Filters; onChange: (value: Filters) => void; onClose: () => void }) {
+  const [draft, setDraft] = useState(value)
+  return <div className="sheet-backdrop" onMouseDown={onClose}><section className="mini-sheet filters-sheet" onMouseDown={e => e.stopPropagation()}><div className="sheet-handle" /><button className="sheet-close" onClick={onClose}><X /></button>
+    <div className="filter-title"><div><p className="eyebrow">FILTER WISHES</p><h2>筛选心愿</h2></div><button className="text-button" onClick={() => setDraft({ category: '全部', kind: 'all', budgetMax: null, priorityMin: 1 })}>重置</button></div>
+    <fieldset><legend>心愿类别</legend><div className="choice-grid categories">{categories.map(category => <button type="button" key={category} className={draft.category === category ? 'active' : ''} onClick={() => setDraft({ ...draft, category })}>{category}</button>)}</div></fieldset>
+    <fieldset><legend>表达方式</legend><div className="choice-grid"><button type="button" className={draft.kind === 'all' ? 'active' : ''} onClick={() => setDraft({ ...draft, kind: 'all' })}>不限</button><button type="button" className={draft.kind === 'inspiration' ? 'active' : ''} onClick={() => setDraft({ ...draft, kind: 'inspiration' })}>心愿灵感</button><button type="button" className={draft.kind === 'exact' ? 'active' : ''} onClick={() => setDraft({ ...draft, kind: 'exact' })}>具体商品</button></div></fieldset>
+    <fieldset><legend>预算上限</legend><div className="choice-grid four">{[{l:'不限',v:null},{l:'¥100',v:100},{l:'¥300',v:300},{l:'¥500',v:500}].map(option => <button type="button" key={option.l} className={draft.budgetMax === option.v ? 'active' : ''} onClick={() => setDraft({ ...draft, budgetMax: option.v })}>{option.l}</button>)}</div></fieldset>
+    <fieldset><legend>最低优先级</legend><div className="priority-filter"><Stars value={draft.priorityMin} editable onChange={priorityMin => setDraft({ ...draft, priorityMin })} /><span>{draft.priorityMin === 1 ? '不限' : `${draft.priorityMin}星及以上`}</span></div></fieldset>
+    <button className="primary full" onClick={() => { onChange(draft); onClose() }}>查看筛选结果</button>
+  </section></div>
+}
+
+function BirthdayBook({ group, currentUser, onSelect, onEditMine, onClose }: { group: Group; currentUser: Profile; onSelect: (id: string) => void; onEditMine: (birthday: string) => void; onClose: () => void }) {
+  const [editing, setEditing] = useState(false)
+  const [birthday, setBirthday] = useState(currentUser.birthday || '')
+  const entries = sortedBirthdays(group.members)
+  return <div className="sheet-backdrop" onMouseDown={onClose}><section className="mini-sheet birthday-sheet" onMouseDown={e => e.stopPropagation()}><div className="sheet-handle" /><button className="sheet-close" onClick={onClose}><X /></button>
+    <div className="birthday-title"><div className="calendar-icon"><CalendarDays /></div><div><p className="eyebrow">BIRTHDAY CALENDAR</p><h2>{group.name}生日簿</h2></div></div>
+    <p>生日临近时会自动出现在群组首页，点击成员即可查看他的心愿。</p>
+    <div className="birthday-list">{entries.map(({ member, next }) => <button key={member.id} onClick={() => onSelect(member.id)}><Avatar profile={member} /><div><b>{member.nickname}{member.id === currentUser.id && <em>我</em>}</b><span>{next.label}</span></div><div className="days-count"><b>{next.days === 0 ? '今天' : next.days}</b><small>{next.days === 0 ? '生日快乐' : '天后'}</small></div><ArrowRight size={17} /></button>)}</div>
+    {!editing ? <button className="secondary full" onClick={() => setEditing(true)}><Cake size={17} />登记或修改我的生日</button> : <form className="birthday-edit" onSubmit={e => { e.preventDefault(); onEditMine(birthday); setEditing(false) }}><label>我的生日<input required type="date" value={birthday} onChange={e => setBirthday(e.target.value)} /></label><button className="primary">保存</button></form>}
+  </section></div>
+}
+
 function AddWish({ groups, onSave, onCancel }: { groups: Group[]; onSave: (wish: Omit<Wish, 'id' | 'ownerId' | 'createdAt' | 'status'>) => void; onCancel: () => void }) {
   const [kind, setKind] = useState<WishKind>('inspiration')
   const [title, setTitle] = useState('')
@@ -196,9 +288,11 @@ function App() {
   const [selectedGroupId, setSelectedGroupId] = useState('g1')
   const [status, setStatus] = useState<'active' | 'fulfilled'>('active')
   const [selectedWishId, setSelectedWishId] = useState<string | null>(null)
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null)
   const [modal, setModal] = useState<Modal>(null)
   const [toast, setToast] = useState('')
   const [query, setQuery] = useState('')
+  const [filters, setFilters] = useState<Filters>({ category: '全部', kind: 'all', budgetMax: null, priorityMin: 1 })
 
   const refresh = async () => {
     const state = await backend.loadAppState()
@@ -221,9 +315,12 @@ function App() {
   const user = data.profiles.find(p => p.id === currentUserId) || data.profiles[0]
   const myGroups = data.groups.filter(g => g.members.some(m => m.id === user.id))
   const group = myGroups.find(g => g.id === selectedGroupId) || myGroups[0]
+  const selectedMember = group?.members.find(m => m.id === selectedMemberId)
+  const birthdayEntries = group ? sortedBirthdays(group.members) : []
+  const upcomingBirthday = birthdayEntries[0]
   const selectedWish = data.wishes.find(w => w.id === selectedWishId)
   const selectedOwner = selectedWish ? data.profiles.find(p => p.id === selectedWish.ownerId) : undefined
-  const visibleWishes = useMemo(() => data.wishes.filter(w => group && w.groupIds.includes(group.id) && w.status === status && (w.title + w.note + w.category).toLowerCase().includes(query.toLowerCase())), [data.wishes, group, status, query])
+  const visibleWishes = useMemo(() => data.wishes.filter(w => group && w.groupIds.includes(group.id) && w.status === status && wishMatches(w, filters) && (w.title + w.note + w.category).toLowerCase().includes(query.toLowerCase())), [data.wishes, group, status, query, filters])
 
   if (mode === 'loading') return <main className="auth-shell"><div className="logo-orb pulse"><Heart /></div></main>
   if (mode === 'auth') return <AuthScreen onDemo={() => { setDemoMode(true); setMode('app') }} />
@@ -246,22 +343,36 @@ function App() {
     const next = selectedWish.status === 'active' ? 'fulfilled' : 'active'
     await mutate(() => backend.setWishStatus(selectedWish.id, next), () => setData(d => ({ ...d, wishes: d.wishes.map(w => w.id === selectedWish.id ? { ...w, status: next } : w) })), next === 'fulfilled' ? '愿望实现，撒花！' : '心愿已经重新开启')
   }
+  const updateBirthday = async (birthday: string) => {
+    await mutate(() => backend.setBirthday(birthday), () => setData(d => ({
+      ...d,
+      profiles: d.profiles.map(p => p.id === user.id ? { ...p, birthday } : p),
+      groups: d.groups.map(g => ({ ...g, members: g.members.map(m => m.id === user.id ? { ...m, birthday } : m) })),
+    })), '生日已经登记好啦')
+  }
 
   return <div className="desktop-stage">
     <div className="phone-shell">
-      {tab === 'groups' && group && <section className="page groups-page">
+      {tab === 'groups' && group && selectedMember && <MemberView member={selectedMember} group={group} wishes={data.wishes} claims={data.claims} currentUser={user} filters={filters} onFilters={() => setModal('filters')} onCategory={category => setFilters(f => ({ ...f, category }))} onBack={() => setSelectedMemberId(null)} onOpenWish={setSelectedWishId} />}
+
+      {tab === 'groups' && group && !selectedMember && <section className="page groups-page">
         <header className="top-header">
           <button className="group-switch" onClick={() => setModal('group-menu')}><span>{group.emoji}</span><b>{group.name}</b><ChevronDown size={16} /></button>
           <button className="icon-button"><MoreHorizontal /></button>
         </header>
-        <div className="birthday-card">
-          <div><p className="eyebrow">下一个生日</p><h2>{group.members.find(m => m.id !== user.id)?.nickname || '朋友'}的心愿，提前看看</h2><p>{group.members.find(m => m.id !== user.id)?.birthday || '生日快到了'} · 礼物不必猜</p></div>
+        <button className="birthday-card" onClick={() => upcomingBirthday ? setSelectedMemberId(upcomingBirthday.member.id) : setModal('birthdays')}>
+          <div><p className="eyebrow">下一个生日</p><h2>{upcomingBirthday ? `${upcomingBirthday.member.nickname}的心愿，提前看看` : '登记生日，不再错过重要日子'}</h2><p>{upcomingBirthday ? `${upcomingBirthday.next.label} · ${upcomingBirthday.next.days === 0 ? '就是今天' : `还有${upcomingBirthday.next.days}天`}` : '打开生日簿开始登记'}</p></div>
           <div className="member-stack">{group.members.slice(0, 3).map((m, i) => <span key={m.id} style={{ zIndex: 4 - i }}><Avatar profile={m} /></span>)}</div>
-        </div>
+        </button>
+        <section className="members-section">
+          <div className="section-heading"><div><p className="eyebrow">GROUP MEMBERS</p><h2>群组成员</h2></div><button className="calendar-link" onClick={() => setModal('birthdays')}><CalendarDays size={15} />生日簿</button></div>
+          <div className="members-scroll">{group.members.map(member => { const birthday = nextBirthday(member.birthday); const count = data.wishes.filter(w => w.ownerId === member.id && w.groupIds.includes(group.id) && w.status === 'active').length; return <button key={member.id} onClick={() => setSelectedMemberId(member.id)}><Avatar profile={member} size="lg" /><b>{member.nickname}</b><span>{birthday ? birthday.label : '生日待登记'}</span><em>{count}个心愿</em></button> })}</div>
+        </section>
         <div className="view-toolbar">
           <div className="segmented compact"><button className={status === 'active' ? 'active' : ''} onClick={() => setStatus('active')}>正在期待</button><button className={status === 'fulfilled' ? 'active' : ''} onClick={() => setStatus('fulfilled')}>已经实现</button></div>
           <label className="search-box"><Search size={17} /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="搜索心愿" /></label>
         </div>
+        <div className="category-filter-row"><CategoryBar value={filters.category} onChange={category => setFilters(f => ({ ...f, category }))} /><button className="filter-icon" onClick={() => setModal('filters')} aria-label="更多筛选"><SlidersHorizontal size={18} />{(filters.kind !== 'all' || filters.budgetMax !== null || filters.priorityMin > 1) && <i />}</button></div>
         <div className="section-heading"><div><p className="eyebrow">GROUP WISHES</p><h2>大家最近想要什么</h2></div><span>{visibleWishes.length}个心愿</span></div>
         <div className="wish-list">{visibleWishes.map(wish => { const owner = data.profiles.find(p => p.id === wish.ownerId)!; const claim = data.claims.find(c => c.wishId === wish.id && c.groupId === group.id)?.state; return <WishCard key={wish.id} wish={wish} owner={owner} claim={claim} isOwner={owner.id === user.id} onOpen={() => setSelectedWishId(wish.id)} /> })}</div>
         {!visibleWishes.length && <div className="empty"><Sparkles /><h3>这里还没有心愿</h3><p>记录一个想法，让朋友以后少猜一点。</p></div>}
@@ -279,7 +390,7 @@ function App() {
         {!demoMode && <button className="demo-reset" onClick={() => supabase?.auth.signOut()}><LogOut size={15} />退出登录</button>}
       </section>}
 
-      {tab !== 'add' && <nav className="bottom-nav">
+      {tab !== 'add' && !selectedMember && <nav className="bottom-nav">
         <button className={tab === 'groups' ? 'active' : ''} onClick={() => setTab('groups')}><Users /><span>群组</span></button>
         <button className="add-fab" onClick={() => setTab('add')}><Plus /></button>
         <button className={tab === 'me' ? 'active' : ''} onClick={() => setTab('me')}><Home /><span>我的</span></button>
@@ -288,6 +399,8 @@ function App() {
       {selectedWish && selectedOwner && group && <WishDetail wish={selectedWish} owner={selectedOwner} group={group} user={user} claim={data.claims.find(c => c.wishId === selectedWish.id && c.groupId === group.id)?.state} onClose={() => setSelectedWishId(null)} onClaim={updateClaim} onFulfill={toggleFulfill} />}
 
       {modal === 'group-menu' && <div className="sheet-backdrop" onMouseDown={() => setModal(null)}><section className="mini-sheet" onMouseDown={e => e.stopPropagation()}><div className="sheet-handle" /><h2>切换群组</h2><div className="group-menu">{myGroups.map(g => <button key={g.id} className={g.id === group?.id ? 'active' : ''} onClick={() => { setSelectedGroupId(g.id); setModal(null) }}><span>{g.emoji}</span><div><b>{g.name}</b><small>{g.members.length}位成员</small></div>{g.id === group?.id && <Check />}</button>)}</div><div className="two-actions"><button className="secondary" onClick={() => setModal('group-create')}><Plus />创建群组</button><button className="secondary" onClick={() => setModal('group-join')}><Link2 />加入群组</button></div></section></div>}
+      {modal === 'filters' && <FilterSheet value={filters} onChange={setFilters} onClose={() => setModal(null)} />}
+      {modal === 'birthdays' && group && <BirthdayBook group={group} currentUser={user} onSelect={id => { setSelectedMemberId(id); setModal(null) }} onEditMine={updateBirthday} onClose={() => setModal(null)} />}
       {(modal === 'group-create' || modal === 'group-join') && <GroupModal type={modal === 'group-create' ? 'create' : 'join'} onClose={() => setModal(null)} onSubmit={async value => {
         if (modal === 'group-create') await mutate(() => backend.createGroup(value, '✨'), () => { const g: Group = { id: crypto.randomUUID(), name: value, emoji: '✨', inviteCode: `WISH-${Math.random().toString(36).slice(2, 6).toUpperCase()}`, members: [user] }; setData(d => ({ ...d, groups: [...d.groups, g] })); setSelectedGroupId(g.id) }, '群组创建成功')
         else await mutate(() => backend.joinGroup(value), () => {}, '已经加入群组')

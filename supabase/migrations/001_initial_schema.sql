@@ -9,7 +9,7 @@ create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   nickname text not null check (char_length(nickname) between 1 and 16),
   color text not null default '#D9796F',
-  birthday text,
+  birthday date,
   created_at timestamptz not null default now()
 );
 
@@ -219,6 +219,14 @@ begin
 end;
 $$;
 
+create or replace function public.set_birthday(p_birthday date)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  update public.profiles set birthday = p_birthday where id = auth.uid();
+  if not found then raise exception 'profile not found'; end if;
+end;
+$$;
+
 create or replace function public.set_gift_claim(p_wish_id uuid, p_group_id uuid, p_state public.claim_state)
 returns void language plpgsql security definer set search_path = public as $$
 declare wish_owner uuid;
@@ -245,4 +253,5 @@ grant execute on function public.create_group(text,text) to authenticated;
 grant execute on function public.join_group(text) to authenticated;
 grant execute on function public.create_wish(jsonb) to authenticated;
 grant execute on function public.set_wish_status(uuid,public.wish_status) to authenticated;
+grant execute on function public.set_birthday(date) to authenticated;
 grant execute on function public.set_gift_claim(uuid,uuid,public.claim_state) to authenticated;

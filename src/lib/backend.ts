@@ -47,6 +47,12 @@ export async function setWishStatus(wishId: string, status: 'active' | 'fulfille
   if (error) throw error
 }
 
+export async function setBirthday(birthday: string) {
+  if (!supabase) throw new Error('Supabase 尚未配置')
+  const { error } = await supabase.rpc('set_birthday', { p_birthday: birthday })
+  if (error) throw error
+}
+
 export async function setClaim(wishId: string, groupId: string, state: ClaimState | null) {
   if (!supabase) throw new Error('Supabase 尚未配置')
   const { error } = await supabase.rpc('set_gift_claim', { p_wish_id: wishId, p_group_id: groupId, p_state: state })

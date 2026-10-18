@@ -38,17 +38,28 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .icon-button, .sheet-close { width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
 .icon-button:hover, .sheet-close:hover { background: #f2ebe6; }
 
-.birthday-card { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; min-height: 150px; padding: 24px; border-radius: 28px; color: #fff; background:
+.birthday-card { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; min-height: 150px; padding: 24px; border: 0; border-radius: 28px; text-align: left; color: #fff; background:
   radial-gradient(circle at 90% 20%, rgba(255,255,255,.2) 0 11%, transparent 12%),
-  linear-gradient(135deg, #c86f67, #a85d61 72%, #91545f); box-shadow: 0 17px 36px rgba(157,83,78,.22); }
+  linear-gradient(135deg, #c86f67, #a85d61 72%, #91545f); box-shadow: 0 17px 36px rgba(157,83,78,.22); cursor: pointer; transition: transform .18s ease; }
+.birthday-card:hover { transform: translateY(-2px); }
 .birthday-card h2 { max-width: 270px; margin: 8px 0; font-size: 24px; line-height: 1.25; letter-spacing: -.02em; }
 .birthday-card p { margin: 0; color: rgba(255,255,255,.76); font-size: 13px; }
 .birthday-card .eyebrow { color: #ffe5dd; }
 .member-stack { display: flex; min-width: 72px; padding-bottom: 4px; }
 .member-stack > span { margin-left: -12px; border: 3px solid rgba(255,255,255,.72); border-radius: 50%; }
 
+.members-section { margin: 27px 0 20px; }
+.calendar-link, .filter-trigger { display: inline-flex; align-items: center; gap: 5px; padding: 6px 9px; border: 0; border-radius: 10px; color: var(--rose-dark); background: var(--rose-soft); font-size: 11px; font-weight: 700; cursor: pointer; }
+.members-scroll { display: grid; grid-auto-flow: column; grid-auto-columns: 108px; gap: 10px; overflow-x: auto; padding: 2px 1px 9px; scrollbar-width: none; }
+.members-scroll::-webkit-scrollbar, .category-scroll::-webkit-scrollbar { display: none; }
+.members-scroll > button { display: grid; justify-items: center; gap: 5px; padding: 15px 8px 12px; border: 1px solid var(--line); border-radius: 20px; background: #fff; box-shadow: 0 7px 18px rgba(73,50,42,.05); cursor: pointer; }
+.members-scroll b { margin-top: 3px; font-size: 12px; }
+.members-scroll span { color: var(--muted); font-size: 9px; }
+.members-scroll em { padding: 3px 7px; border-radius: 999px; color: #6d625d; background: #f2ebe6; font-size: 9px; font-style: normal; }
+
 .eyebrow { margin: 0; color: var(--rose-dark); font-size: 10px; font-weight: 700; letter-spacing: .17em; }
 .view-toolbar { display: grid; grid-template-columns: 1.1fr .9fr; align-items: center; gap: 10px; margin: 22px 0 25px; }
+.members-section + .view-toolbar { margin-top: 0; margin-bottom: 14px; }
 .segmented { display: flex; padding: 4px; border-radius: 15px; background: #f0e8e2; }
 .segmented button { flex: 1; padding: 10px 12px; border: 0; border-radius: 11px; color: #8f837e; background: transparent; font-size: 13px; font-weight: 600; cursor: pointer; }
 .segmented button.active { color: var(--ink); background: #fff; box-shadow: 0 3px 12px rgba(77,55,48,.1); }
@@ -59,6 +70,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .section-heading h2 { margin: 4px 0 0; font-size: 20px; letter-spacing: -.02em; }
 .section-heading p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
 .section-heading > span { color: var(--muted); font-size: 12px; }
+
+.category-filter-row { display: grid; grid-template-columns: 1fr 40px; align-items: center; gap: 8px; margin-bottom: 22px; }
+.category-scroll { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; }
+.category-scroll > button { flex: 0 0 auto; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; color: #7e726d; background: #fff; font-size: 11px; cursor: pointer; }
+.category-scroll > button.active { border-color: #d99087; color: #9f514b; background: var(--rose-soft); font-weight: 700; }
+.filter-icon { position: relative; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 13px; background: #fff; cursor: pointer; }
+.filter-icon i { position: absolute; top: 7px; right: 7px; width: 6px; height: 6px; border: 1px solid #fff; border-radius: 50%; background: var(--rose); }
 
 .wish-list { display: grid; gap: 15px; }
 .wish-card { width: 100%; display: grid; grid-template-columns: 116px 1fr; min-height: 151px; padding: 0; overflow: hidden; text-align: left; border: 1px solid rgba(232,221,213,.8); border-radius: 22px; background: rgba(255,255,255,.9); box-shadow: 0 9px 24px rgba(73,50,42,.06); cursor: pointer; transition: transform .18s ease, box-shadow .18s ease; }
@@ -132,6 +150,19 @@ legend { padding: 0 6px; color: var(--ink); font-size: 14px; font-weight: 700; }
 .me-page > .segmented { margin-bottom: 24px; }
 .demo-reset { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 24px; border: 0; color: var(--muted); background: transparent; font-size: 12px; cursor: pointer; }
 
+.member-page { background: linear-gradient(#fffaf6 0, #f8f3ee 100%); }
+.member-page .simple-header > p { font-size: 12px; color: var(--muted); }
+.member-hero { position: relative; display: grid; justify-items: center; gap: 12px; padding: 24px 18px 22px; text-align: center; border: 1px solid var(--line); border-radius: 28px; background: linear-gradient(145deg, #fff, #fbede8); box-shadow: 0 12px 30px rgba(73,50,42,.07); }
+.member-hero h1 { margin: 5px 0 5px; font-size: 24px; letter-spacing: -.03em; }
+.member-hero > div > p:last-child { margin: 0; color: var(--muted); font-size: 12px; }
+.birthday-medal { position: absolute; top: 16px; right: 16px; display: grid; justify-items: center; gap: 2px; min-width: 48px; padding: 8px; border-radius: 15px; color: #9b574d; background: #f9ded8; }
+.birthday-medal b { font-size: 11px; }
+.member-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0 20px; }
+.member-summary > div { display: grid; justify-items: center; gap: 3px; padding: 12px 6px; border-radius: 16px; background: #fff; }
+.member-summary b { font-size: 14px; }
+.member-summary span { color: var(--muted); font-size: 9px; }
+.member-page > .category-scroll { margin-bottom: 22px; }
+
 .avatar { flex: 0 0 auto; display: inline-grid; place-items: center; border-radius: 50%; color: #fff; font-weight: 700; }
 .avatar-sm { width: 22px; height: 22px; font-size: 10px; }
 .avatar-md { width: 38px; height: 38px; font-size: 13px; }
@@ -171,6 +202,32 @@ legend { padding: 0 6px; color: var(--ink); font-size: 14px; font-weight: 700; }
 .group-menu button.active { border-color: #dda39b; background: #fff7f4; }
 .group-menu button.active > svg { color: var(--rose); }
 .two-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 14px; }
+
+.filters-sheet { display: grid; gap: 18px; }
+.filter-title { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 12px; }
+.filter-title h2 { margin: 3px 0 0; }
+.filters-sheet fieldset { padding: 14px; }
+.choice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.choice-grid.categories { grid-template-columns: repeat(4, 1fr); }
+.choice-grid.four { grid-template-columns: repeat(4, 1fr); }
+.choice-grid button { min-height: 38px; padding: 7px 4px; border: 1px solid var(--line); border-radius: 11px; color: var(--muted); background: #fff; font-size: 10px; cursor: pointer; }
+.choice-grid button.active { border-color: #d89289; color: #9d514a; background: var(--rose-soft); font-weight: 700; }
+.priority-filter { display: flex; align-items: center; justify-content: space-between; }
+.priority-filter > span { color: var(--muted); font-size: 10px; }
+
+.birthday-title { display: flex; align-items: center; gap: 12px; margin-top: 13px; }
+.birthday-title h2 { margin: 3px 0 0; }
+.calendar-icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 16px; color: #a4554d; background: #f8ddd7; }
+.birthday-list { display: grid; gap: 8px; margin: 4px 0 18px; }
+.birthday-list > button { display: grid; grid-template-columns: 40px 1fr auto 18px; align-items: center; gap: 10px; padding: 11px; border: 1px solid var(--line); border-radius: 16px; text-align: left; background: #fff; cursor: pointer; }
+.birthday-list b, .birthday-list span { display: block; }
+.birthday-list span { margin-top: 2px; color: var(--muted); font-size: 10px; }
+.birthday-list em { margin-left: 5px; padding: 2px 5px; border-radius: 6px; color: #9f564e; background: var(--rose-soft); font-size: 8px; font-style: normal; }
+.days-count { min-width: 40px; text-align: right; }
+.days-count b { color: var(--rose-dark); font-size: 12px; }
+.days-count small { color: var(--muted); font-size: 8px; }
+.birthday-edit { display: grid; grid-template-columns: 1fr 82px; align-items: end; gap: 9px; }
+.birthday-edit .primary { min-height: 46px; }
 
 .auth-shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
 .auth-card { width: min(100%, 410px); display: grid; gap: 18px; padding: 38px 34px; border: 1px solid rgba(255,255,255,.8); border-radius: 30px; background: rgba(255,250,246,.93); box-shadow: var(--shadow); backdrop-filter: blur(16px); }
