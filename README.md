@@ -10,6 +10,17 @@
 当前公开版本为 `v1.0.0`。站点默认使用演示数据，无需登录即可体验主要流程。
 仓库中的姓名、生日、邀请码和礼物认领关系均为虚构示例，不对应真实用户。
 
+## 迭代历程
+
+| 版本 | 关键变化 | 快照 |
+| --- | --- | --- |
+| v0.3 | 完成心愿、群组与秘密认领的核心原型 | [`milestone/v0.3-prototype`](https://github.com/Amanda-QianXun/wish-space/tree/milestone/v0.3-prototype) |
+| v0.6 | 加入成员空间、生日日历与筛选 | [`milestone/v0.6-birthday-groups`](https://github.com/Amanda-QianXun/wish-space/tree/milestone/v0.6-birthday-groups) |
+| v0.9 | 调整为个人心愿优先，补齐商品图片与编辑闭环 | [`milestone/v0.9-personal-wishes`](https://github.com/Amanda-QianXun/wish-space/tree/milestone/v0.9-personal-wishes) |
+| v1.0 | 完成视觉层级、排序、消息入口和交互细节收口 | `main` |
+
+更完整的取舍说明见 [`docs/ITERATIONS.md`](docs/ITERATIONS.md)。
+
 ## 核心功能
 
 - 记录心愿灵感或具体商品，支持图片、预算、分类、优先级和分享范围
