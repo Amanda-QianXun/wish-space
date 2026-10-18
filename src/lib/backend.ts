@@ -29,6 +29,12 @@ export async function createWish(wish: Omit<Wish, 'id' | 'createdAt' | 'ownerId'
   if (error) throw error
 }
 
+export async function updateWish(wishId: string, wish: Omit<Wish, 'id' | 'createdAt' | 'ownerId' | 'status'>) {
+  if (!supabase) throw new Error('Supabase 尚未配置')
+  const { error } = await supabase.rpc('update_wish', { p_wish_id: wishId, p_payload: wish })
+  if (error) throw error
+}
+
 export async function createGroup(name: string, emoji: string) {
   if (!supabase) throw new Error('Supabase 尚未配置')
   const { error } = await supabase.rpc('create_group', { p_name: name, p_emoji: emoji })
