@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import {
-  ArrowLeft, ArrowRight, ArrowUpDown, Bell, Cake, CalendarDays, Cat, Check, ChevronDown, ChevronLeft, ChevronRight, Dog, Gift, Heart, Home, Link2, LockKeyhole,
-  LogOut, MoreHorizontal, PackageCheck, Pencil, Plus, Rabbit, SlidersHorizontal, Sparkles, Star, UserRound, Users, X,
+  ArrowLeft, ArrowRight, ArrowUpDown, Bell, Cake, CalendarDays, Cat, Check, ChevronDown, ChevronLeft, ChevronRight, Dog, Gift, Heart, Home, ImagePlus, Link2, LockKeyhole,
+  LogOut, MoreHorizontal, PackageCheck, Pencil, Plus, Rabbit, SlidersHorizontal, Sparkles, Star, Trash2, UserRound, Users, X,
 } from 'lucide-react'
 import { demoData } from './data/demo'
 import { hasSupabase, supabase } from './lib/supabase'
@@ -101,6 +101,33 @@ function formatWishDate(value: string) {
   return `${date.getMonth() + 1}月${date.getDate()}日`
 }
 
+function readWishImage(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    if (!file.type.startsWith('image/')) { reject(new Error('请选择图片文件')); return }
+    if (file.size > 8 * 1024 * 1024) { reject(new Error('图片请控制在 8MB 以内')); return }
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('图片读取失败'))
+    reader.onload = () => {
+      const source = String(reader.result)
+      const picture = new Image()
+      picture.onerror = () => reject(new Error('图片读取失败'))
+      picture.onload = () => {
+        const maxSide = 1200
+        const scale = Math.min(1, maxSide / Math.max(picture.width, picture.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(1, Math.round(picture.width * scale))
+        canvas.height = Math.max(1, Math.round(picture.height * scale))
+        const context = canvas.getContext('2d')
+        if (!context) { reject(new Error('图片处理失败')); return }
+        context.drawImage(picture, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/webp', .82))
+      }
+      picture.src = source
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 function SortControl({ value, onChange }: { value: SortMode; onChange: (value: SortMode) => void }) {
   const criterion = value === 'newest' || value === 'oldest' ? 'time' : value.startsWith('priority') ? 'priority' : 'budget'
   const ascending = value === 'oldest' || value.endsWith('-asc')
@@ -178,7 +205,8 @@ function WishCard({ wish, owner, claim, isOwner, onOpen, onOwnerOpen }: { wish: 
   const price = wish.kind === 'exact' && wish.price ? `¥${wish.price}` : wish.budgetMin || wish.budgetMax
     ? `¥${wish.budgetMin ?? 0}–${wish.budgetMax ?? '不限'}` : '预算不限'
   return <article className="wish-card" role="button" tabIndex={0} onClick={onOpen} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') onOpen() }}>
-    <div className="wish-image" style={{ backgroundImage: wish.image ? `url(${wish.image})` : undefined }}>
+    <div className={`wish-image${wish.image ? '' : ' wish-image-placeholder'}`} style={{ backgroundImage: wish.image ? `url(${wish.image})` : undefined }}>
+      {!wish.image && <Gift className="placeholder-gift" aria-hidden="true" />}
       <span className={`kind-badge ${wish.kind}`}>{wish.kind === 'exact' ? '具体商品' : '心愿灵感'}</span>
       {!isOwner && claim && <span className="claim-badge"><LockKeyhole size={12} />{claim === 'purchased' ? '已买好' : '已认领'}</span>}
     </div>
@@ -191,16 +219,16 @@ function WishCard({ wish, owner, claim, isOwner, onOpen, onOwnerOpen }: { wish: 
   </article>
 }
 
-function WishDetail({ wish, owner, group, sharedGroups, user, claim, onClose, onClaim, onFulfill, onEdit, onOwnerOpen }: {
+function WishDetail({ wish, owner, group, sharedGroups, user, claim, onClose, onClaim, onFulfill, onDelete, onEdit, onOwnerOpen }: {
   wish: Wish; owner: Profile; group: Group; user: Profile; claim?: ClaimState;
-  sharedGroups: Group[]; onClose: () => void; onClaim: (state: ClaimState | null) => void; onFulfill: () => void; onEdit: () => void; onOwnerOpen: () => void
+  sharedGroups: Group[]; onClose: () => void; onClaim: (state: ClaimState | null) => void; onFulfill: () => void; onDelete: () => void; onEdit: () => void; onOwnerOpen: () => void
 }) {
   const isOwner = wish.ownerId === user.id
   const override = wish.overrides?.find(o => o.groupId === group.id)
   const note = override?.note || wish.note
-  return <div className="sheet-backdrop" onMouseDown={onClose}><article className="detail-sheet" onMouseDown={e => e.stopPropagation()}>
+  return <div className="sheet-backdrop" onMouseDown={onClose}><article className={`detail-sheet${wish.image ? '' : ' no-image'}`} onMouseDown={e => e.stopPropagation()}>
     <div className="sheet-handle" /><button className="sheet-close" onClick={onClose}><X /></button>
-    {wish.image && <div className="detail-image" style={{ backgroundImage: `url(${wish.image})` }} />}
+    <div className={`detail-image${wish.image ? '' : ' detail-image-placeholder'}`} style={{ backgroundImage: wish.image ? `url(${wish.image})` : undefined }}>{!wish.image && <Gift aria-hidden="true" />}</div>
     <div className="detail-body">
       <div className="detail-owner-row"><div className="detail-owner">{isOwner ? <Avatar profile={owner} /> : <button type="button" className="detail-avatar-link" aria-label={`进入${owner.nickname}的心愿空间`} onClick={onOwnerOpen}><Avatar profile={owner} /></button>}<span>{isOwner ? '我的心愿' : `${owner.nickname}的心愿`}</span><span className={`kind-badge ${wish.kind}`}>{wish.kind === 'exact' ? '具体商品' : '心愿灵感'}</span></div><Stars value={wish.priority} /></div>
       <div className="detail-title-row"><h2>{wish.title}</h2>{isOwner && <button className="edit-wish-button" onClick={onEdit} aria-label="编辑心愿"><Pencil size={17} /></button>}</div>
@@ -215,6 +243,7 @@ function WishDetail({ wish, owner, group, sharedGroups, user, claim, onClose, on
       {isOwner && <section className="shared-groups"><small>分享至</small><div>{sharedGroups.map(item => <span key={item.id}><i>{item.emoji}</i>{item.name}</span>)}</div></section>}
       {isOwner ? <div className="owner-state owner-state-minimal">
         <button className="text-button" onClick={onFulfill}>{wish.status === 'fulfilled' ? '重新开启' : '标记实现'}</button>
+        <button className="delete-wish-button" onClick={onDelete}><Trash2 size={15} />删除心愿</button>
       </div> : <section className="claim-panel claim-panel-compact">
         {!claim ? <button className="primary full" onClick={() => onClaim('reserved')}><Gift size={18} />秘密认领</button> :
           <div className="claim-actions">
@@ -368,12 +397,14 @@ function AddWish({ groups, initial, onSave, onCancel }: { groups: Group[]; initi
   const [url, setUrl] = useState(initial?.url || '')
   const [note, setNote] = useState(initial?.note || '')
   const [styleNote, setStyleNote] = useState(initial?.styleNote || '')
+  const [image, setImage] = useState(initial?.image || '')
+  const [imageError, setImageError] = useState('')
   const [selected, setSelected] = useState<string[]>(initial?.groupIds || (groups[0] ? [groups[0].id] : []))
   const submit = (e: FormEvent) => {
     e.preventDefault()
     onSave({ title, kind, priority, category, note, styleNote, groupIds: selected,
       budgetMin: budgetMin ? Number(budgetMin) : undefined, budgetMax: budgetMax ? Number(budgetMax) : undefined,
-      price: price ? Number(price) : undefined, platform, url, image: initial?.image, overrides: initial?.overrides })
+      price: price ? Number(price) : undefined, platform, url, image: image || undefined, overrides: initial?.overrides })
   }
   return <section className="page add-page">
     <header className="simple-header"><button className="icon-button" onClick={onCancel}><X /></button><h1>{initial ? '编辑心愿' : '添加心愿'}</h1><button className="text-button" form="wish-form">保存</button></header>
@@ -391,6 +422,21 @@ function AddWish({ groups, initial, onSave, onCancel }: { groups: Group[]; initi
         <div className="two-cols"><label>参考价格<input inputMode="decimal" value={price} onChange={e => setPrice(e.target.value)} /></label><label>购买平台<input value={platform} onChange={e => setPlatform(e.target.value)} /></label></div>
         <label>商品链接<input type="url" value={url} onChange={e => setUrl(e.target.value)} /></label>
       </>}
+      <div className="wish-image-field">
+        <div className={`wish-image-preview${image ? '' : ' empty'}`} style={{ backgroundImage: image ? `url(${image})` : undefined }}>{!image && <Gift aria-hidden="true" />}</div>
+        <div className="wish-image-actions">
+          <span>心愿图片</span>
+          <label className="image-upload-button"><ImagePlus size={17} />{image ? '更换图片' : '上传图片'}<input type="file" accept="image/*" onChange={async event => {
+            const file = event.target.files?.[0]
+            if (!file) return
+            try { setImageError(''); setImage(await readWishImage(file)) }
+            catch (error) { setImageError(error instanceof Error ? error.message : '图片读取失败') }
+            event.target.value = ''
+          }} /></label>
+          {image && <button type="button" className="remove-image-button" onClick={() => setImage('')}>移除图片</button>}
+          {imageError && <small className="form-error">{imageError}</small>}
+        </div>
+      </div>
       <label>补充说明<textarea value={note} onChange={e => setNote(e.target.value)} /></label>
       <fieldset><legend>分享给谁</legend>
         <div className="group-options">{groups.map(group => { const checked = selected.includes(group.id); return <button type="button" key={group.id} className={checked ? 'group-option checked' : 'group-option'} onClick={() => setSelected(s => checked ? s.filter(id => id !== group.id) : [...s, group.id])}><span>{group.emoji}</span><div><b>{group.name}</b><small>{group.members.length}位成员</small></div><i>{checked && <Check size={15} />}</i></button> })}</div>
@@ -477,6 +523,17 @@ function App() {
     const next = selectedWish.status === 'active' ? 'fulfilled' : 'active'
     await mutate(() => backend.setWishStatus(selectedWish.id, next), () => setData(d => ({ ...d, wishes: d.wishes.map(w => w.id === selectedWish.id ? { ...w, status: next } : w) })), next === 'fulfilled' ? '愿望实现，撒花！' : '心愿已经重新开启')
   }
+  const deleteWish = async () => {
+    if (!selectedWish || selectedWish.ownerId !== user.id) return
+    if (!window.confirm('确定删除这条心愿吗？删除后无法恢复。')) return
+    const wishId = selectedWish.id
+    await mutate(() => backend.deleteWish(wishId), () => setData(d => ({
+      ...d,
+      wishes: d.wishes.filter(w => w.id !== wishId),
+      claims: d.claims.filter(claim => claim.wishId !== wishId),
+    })), '心愿已删除')
+    setSelectedWishId(null)
+  }
   const updateBirthday = async (birthday: string) => {
     await mutate(() => backend.setBirthday(birthday), () => setData(d => ({
       ...d,
@@ -552,7 +609,7 @@ function App() {
         <button className={tab === 'groups' ? 'active' : ''} onClick={() => setTab('groups')}><Users /><span>群组心愿</span></button>
       </nav>}
 
-      {selectedWish && selectedOwner && group && <WishDetail wish={selectedWish} owner={selectedOwner} group={group} sharedGroups={myGroups.filter(item => selectedWish.groupIds.includes(item.id))} user={user} claim={data.claims.find(c => c.wishId === selectedWish.id && c.groupId === group.id)?.state} onClose={() => setSelectedWishId(null)} onClaim={updateClaim} onFulfill={toggleFulfill} onEdit={() => openComposer(tab === 'groups' ? 'groups' : 'me', selectedWish.id)} onOwnerOpen={() => { setSelectedWishId(null); setTab('groups'); setSelectedMemberId(selectedOwner.id) }} />}
+      {selectedWish && selectedOwner && group && <WishDetail wish={selectedWish} owner={selectedOwner} group={group} sharedGroups={myGroups.filter(item => selectedWish.groupIds.includes(item.id))} user={user} claim={data.claims.find(c => c.wishId === selectedWish.id && c.groupId === group.id)?.state} onClose={() => setSelectedWishId(null)} onClaim={updateClaim} onFulfill={toggleFulfill} onDelete={deleteWish} onEdit={() => openComposer(tab === 'groups' ? 'groups' : 'me', selectedWish.id)} onOwnerOpen={() => { setSelectedWishId(null); setTab('groups'); setSelectedMemberId(selectedOwner.id) }} />}
 
       {modal === 'group-menu' && <div className="sheet-backdrop" onMouseDown={() => setModal(null)}><section className="mini-sheet group-switch-sheet" onMouseDown={e => e.stopPropagation()}><div className="sheet-handle" /><h2>切换群组</h2><div className="group-menu">{myGroups.map(g => <div key={g.id} className={`group-menu-row${g.id === group?.id ? ' active' : ''}`}><button className="group-select-button" onClick={() => { setSelectedGroupId(g.id); setModal(null) }}><span>{g.emoji}</span><div><b>{g.name}</b><small>{g.members.length}位成员</small></div>{g.id === group?.id && <Check />}</button><button className="group-row-detail" onClick={() => { setSelectedGroupId(g.id); setModal('group-detail') }} aria-label={`查看${g.name}详情`}><MoreHorizontal /></button></div>)}</div><div className="two-actions"><button className="secondary" onClick={() => setModal('group-create')}><Plus />创建群组</button><button className="secondary" onClick={() => setModal('group-join')}><Link2 />加入群组</button></div></section></div>}
       {modal === 'group-detail' && group && <GroupDetail group={group} wishes={data.wishes} currentUser={user} onMember={id => { setSelectedMemberId(id); setModal(null) }} onCopyInvite={copyInvite} onClose={() => setModal(null)} />}

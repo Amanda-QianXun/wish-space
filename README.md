@@ -55,7 +55,7 @@ npm run build
 ## 接入真实多账号
 
 1. 创建 Supabase 项目。
-2. 在 SQL Editor 中依次执行 `supabase/migrations/001_initial_schema.sql` 和 `supabase/migrations/002_update_wish.sql`。
+2. 在 SQL Editor 中依次执行 `supabase/migrations/001_initial_schema.sql`、`supabase/migrations/002_update_wish.sql` 和 `supabase/migrations/003_delete_wish.sql`。
 3. 将 `.env.example` 复制为 `.env.local`，填写项目配置：
 
 ```env

@@ -1457,3 +1457,77 @@ body * { font-weight: 400 !important; }
   display: block;
   margin: 0;
 }
+
+/* v23 · 图片补全、详情避让与心愿删除 */
+.wish-image-placeholder,
+.detail-image-placeholder,
+.wish-image-preview.empty {
+  display: grid;
+  place-items: center;
+  color: #a76f64;
+  background:
+    radial-gradient(circle at 28% 24%, rgba(255,255,255,.78) 0 9%, transparent 10%),
+    linear-gradient(145deg, #f8e8de, #e8eef9);
+}
+.wish-image-placeholder .placeholder-gift { width: 27px; height: 27px; opacity: .72; }
+.detail-image-placeholder svg { width: 42px; height: 42px; opacity: .62; }
+.detail-sheet.no-image .sheet-close { background: rgba(255,255,255,.92); box-shadow: 0 2px 10px rgba(58,46,41,.08); }
+
+.wish-image-field {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  align-items: center;
+  gap: 14px;
+}
+.wish-image-preview {
+  width: 92px;
+  height: 92px;
+  border-radius: 12px;
+  background-size: cover;
+  background-position: center;
+}
+.wish-image-preview svg { width: 28px; height: 28px; opacity: .65; }
+.wish-image-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.wish-image-actions > span { flex-basis: 100%; color: var(--ink); font-size: 12.5px; }
+.image-upload-button,
+.remove-image-button {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: #665d58;
+  background: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+.image-upload-button input { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+.remove-image-button { border-color: transparent; color: #a2554d; background: var(--rose-soft); }
+.wish-image-actions .form-error { flex-basis: 100%; }
+
+.owner-state-minimal { gap: 9px; }
+.delete-wish-button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+  border: 1px solid #eccdc8;
+  border-radius: 19px;
+  color: #a64f47;
+  background: #fff;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.delete-wish-button:hover { background: #fff5f3; }
+
+@media (max-width: 390px) {
+  .wish-image-field { grid-template-columns: 82px 1fr; gap: 12px; }
+  .wish-image-preview { width: 82px; height: 82px; }
+  .owner-state-minimal .text-button,
+  .delete-wish-button { min-width: 0; padding-right: 14px; padding-left: 14px; }
+}

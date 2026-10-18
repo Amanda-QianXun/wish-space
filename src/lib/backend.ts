@@ -53,6 +53,12 @@ export async function setWishStatus(wishId: string, status: 'active' | 'fulfille
   if (error) throw error
 }
 
+export async function deleteWish(wishId: string) {
+  if (!supabase) throw new Error('Supabase 尚未配置')
+  const { error } = await supabase.rpc('delete_wish', { p_wish_id: wishId })
+  if (error) throw error
+}
+
 export async function setBirthday(birthday: string) {
   if (!supabase) throw new Error('Supabase 尚未配置')
   const { error } = await supabase.rpc('set_birthday', { p_birthday: birthday })
