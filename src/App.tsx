@@ -399,7 +399,7 @@ function AddWish({ groups, initial, onSave, onCancel }: { groups: Group[]; initi
   const [styleNote, setStyleNote] = useState(initial?.styleNote || '')
   const [image, setImage] = useState(initial?.image || '')
   const [imageError, setImageError] = useState('')
-  const [selected, setSelected] = useState<string[]>(initial?.groupIds || (groups[0] ? [groups[0].id] : []))
+  const [selected, setSelected] = useState<string[]>(initial?.groupIds || [])
   const submit = (e: FormEvent) => {
     e.preventDefault()
     onSave({ title, kind, priority, category, note, styleNote, groupIds: selected,
@@ -439,9 +439,9 @@ function AddWish({ groups, initial, onSave, onCancel }: { groups: Group[]; initi
       </div>
       <label>补充说明<textarea value={note} onChange={e => setNote(e.target.value)} /></label>
       <fieldset><legend>分享给谁</legend>
-        <div className="group-options">{groups.map(group => { const checked = selected.includes(group.id); return <button type="button" key={group.id} className={checked ? 'group-option checked' : 'group-option'} onClick={() => setSelected(s => checked ? s.filter(id => id !== group.id) : [...s, group.id])}><span>{group.emoji}</span><div><b>{group.name}</b><small>{group.members.length}位成员</small></div><i>{checked && <Check size={15} />}</i></button> })}</div>
+        <div className="group-options"><button type="button" className={!selected.length ? 'group-option checked' : 'group-option'} onClick={() => setSelected([])}><span><LockKeyhole size={18} /></span><div><b>仅自己可见</b></div><i>{!selected.length && <Check size={15} />}</i></button>{groups.map(group => { const checked = selected.includes(group.id); return <button type="button" key={group.id} className={checked ? 'group-option checked' : 'group-option'} onClick={() => setSelected(s => checked ? s.filter(id => id !== group.id) : [...s, group.id])}><span>{group.emoji}</span><div><b>{group.name}</b><small>{group.members.length}位成员</small></div><i>{checked && <Check size={15} />}</i></button> })}</div>
       </fieldset>
-      <button className="primary full save-button" disabled={!title.trim() || !selected.length}>{initial ? <Pencil size={18} /> : <Sparkles size={18} />}{initial ? '保存修改' : '保存心愿'}</button>
+      <button className="primary full save-button" disabled={!title.trim()}>{initial ? <Pencil size={18} /> : <Sparkles size={18} />}{initial ? '保存修改' : '保存心愿'}</button>
     </form>
   </section>
 }

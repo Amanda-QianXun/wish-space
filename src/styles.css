@@ -1465,9 +1465,7 @@ body * { font-weight: 400 !important; }
   display: grid;
   place-items: center;
   color: #a76f64;
-  background:
-    radial-gradient(circle at 28% 24%, rgba(255,255,255,.78) 0 9%, transparent 10%),
-    linear-gradient(145deg, #f8e8de, #e8eef9);
+  background: #f7eee9;
 }
 .wish-image-placeholder .placeholder-gift { width: 27px; height: 27px; opacity: .72; }
 .detail-image-placeholder svg { width: 42px; height: 42px; opacity: .62; }
