@@ -19,7 +19,7 @@
 | v0.9 | 调整为个人心愿优先，补齐商品图片与编辑闭环 | [`milestone/v0.9-personal-wishes`](https://github.com/Amanda-QianXun/wish-space/tree/milestone/v0.9-personal-wishes) |
 | v1.0 | 完成视觉层级、排序、消息入口和交互细节收口 | `main` |
 
-更完整的取舍说明见 [`docs/ITERATIONS.md`](docs/ITERATIONS.md)。
+完整需求说明见 [`docs/PRD.md`](docs/PRD.md)，版本取舍见 [`docs/ITERATIONS.md`](docs/ITERATIONS.md)。
 
 ## 核心功能
 
