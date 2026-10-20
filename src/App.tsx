@@ -24,9 +24,25 @@ interface Filters {
 const STORE_KEY = 'wish-space-demo-v1'
 const USER_KEY = 'wish-space-demo-user'
 const DEMO_NICKNAMES: Record<string, string> = { u1: '小A', u2: '小B', u3: '小C' }
+const DEMO_NOTE_MIGRATIONS: Record<string, { from: string; to: string }> = {
+  w1: { from: '希望光线柔和一点，放在床头不占地方。', to: '能够放在床头 光线柔和一点的~' },
+  w2: { from: 'S号就够了，比较喜欢灰蓝色。', to: 'S号 灰蓝色' },
+  w3: { from: '中文或英文都可以，希望图片比例高一点。', to: '国内的城市 图片比例高' },
+}
+const LEGACY_CRATE_OVERRIDE = '如果旅行时看到类似的中古收纳也可以，不一定同款。'
 
 function withDemoNickname(profile: Profile): Profile {
   return { ...profile, nickname: DEMO_NICKNAMES[profile.id] ?? profile.nickname }
+}
+
+function migrateDemoWish(wish: Wish): Wish {
+  const noteMigration = DEMO_NOTE_MIGRATIONS[wish.id]
+  return {
+    ...wish,
+    note: noteMigration && wish.note === noteMigration.from ? noteMigration.to : wish.note,
+    overrides: wish.overrides?.map(override => override.note === LEGACY_CRATE_OVERRIDE ? { ...override, note: 'S号 灰蓝色' } : override),
+    image: demoData.wishes.find(item => item.id === wish.id)?.image || wish.image,
+  }
 }
 
 function cloneDemo(): AppData {
@@ -42,10 +58,7 @@ function getStoredData() {
       ...stored,
       profiles: stored.profiles.map(withDemoNickname),
       groups: stored.groups.map(group => ({ ...group, members: group.members.map(withDemoNickname) })),
-      wishes: stored.wishes.map(wish => ({
-        ...wish,
-        image: demoData.wishes.find(item => item.id === wish.id)?.image || wish.image,
-      })),
+      wishes: stored.wishes.map(migrateDemoWish),
     }
   } catch { return cloneDemo() }
 }
