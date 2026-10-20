@@ -23,6 +23,11 @@ interface Filters {
 
 const STORE_KEY = 'wish-space-demo-v1'
 const USER_KEY = 'wish-space-demo-user'
+const DEMO_NICKNAMES: Record<string, string> = { u1: '小A', u2: '小B', u3: '小C' }
+
+function withDemoNickname(profile: Profile): Profile {
+  return { ...profile, nickname: DEMO_NICKNAMES[profile.id] ?? profile.nickname }
+}
 
 function cloneDemo(): AppData {
   return JSON.parse(JSON.stringify(demoData)) as AppData
@@ -35,8 +40,8 @@ function getStoredData() {
     const stored = JSON.parse(value) as AppData
     return {
       ...stored,
-      profiles: stored.profiles.map(profile => profile.id === 'u2' ? { ...profile, nickname: '小猫' } : profile),
-      groups: stored.groups.map(group => ({ ...group, members: group.members.map(member => member.id === 'u2' ? { ...member, nickname: '小猫' } : member) })),
+      profiles: stored.profiles.map(withDemoNickname),
+      groups: stored.groups.map(group => ({ ...group, members: group.members.map(withDemoNickname) })),
       wishes: stored.wishes.map(wish => ({
         ...wish,
         image: demoData.wishes.find(item => item.id === wish.id)?.image || wish.image,
@@ -196,7 +201,7 @@ function ProfileSetup({ onDone }: { onDone: () => void }) {
     <div className="logo-orb"><Heart size={30} /></div>
     <h1>朋友怎么称呼你？</h1>
     <p className="auth-lead">昵称会显示在你加入的群组和发布的心愿旁。</p>
-    <label>专属昵称<input required maxLength={16} value={nickname} onChange={e => setNickname(e.target.value)} placeholder="例如：小鹿" /></label>
+    <label>专属昵称<input required maxLength={16} value={nickname} onChange={e => setNickname(e.target.value)} placeholder="例如：小雨" /></label>
     <button className="primary full" disabled={!nickname.trim() || loading}>进入心愿空间</button>
   </form></main>
 }
@@ -364,7 +369,7 @@ function NotificationsPage({ onBack }: { onBack: () => void }) {
     <header className="simple-header"><button className="icon-button" onClick={onBack}><ArrowLeft /></button><h1>消息通知</h1><span className="header-spacer" /></header>
     <div className="notification-list">
       <article><span className="notification-icon"><Users size={18} /></span><div><h2>已加入“周末放空小组”</h2><p>现在可以查看群组成员分享的心愿。</p><time>10月12日</time></div></article>
-      <article><span className="notification-icon birthday"><Cake size={18} /></span><div><h2>小猫登记了生日</h2><p>生日是10月26日，已经同步到生日日历。</p><time>10月10日</time></div></article>
+      <article><span className="notification-icon birthday"><Cake size={18} /></span><div><h2>小B登记了生日</h2><p>生日是10月26日，已经同步到生日日历。</p><time>10月10日</time></div></article>
     </div>
   </section>
 }

@@ -6,24 +6,24 @@ import photoBookImage from '../assets/wish-photo-book.jpg'
 export const demoData: AppData = {
   // 以下姓名、生日、邀请码与认领关系均为虚构的界面演示数据。
   profiles: [
-    { id: 'u1', nickname: '小鹿', color: '#E9A59C', birthday: '2000-11-18' },
-    { id: 'u2', nickname: '小猫', color: '#8FB8A8', birthday: '2000-10-26' },
-    { id: 'u3', nickname: '小熊', color: '#A9A2D4', birthday: '2000-12-09' },
+    { id: 'u1', nickname: '小A', color: '#E9A59C', birthday: '2000-11-18' },
+    { id: 'u2', nickname: '小B', color: '#8FB8A8', birthday: '2000-10-26' },
+    { id: 'u3', nickname: '小C', color: '#A9A2D4', birthday: '2000-12-09' },
   ],
   groups: [
     {
       id: 'g1', name: '周末放空小组', emoji: '🌿', inviteCode: 'DEMO-8K2P',
       members: [
-        { id: 'u1', nickname: '小鹿', color: '#E9A59C', birthday: '2000-11-18' },
-        { id: 'u2', nickname: '小猫', color: '#8FB8A8', birthday: '2000-10-26' },
-        { id: 'u3', nickname: '小熊', color: '#A9A2D4', birthday: '2000-12-09' },
+        { id: 'u1', nickname: '小A', color: '#E9A59C', birthday: '2000-11-18' },
+        { id: 'u2', nickname: '小B', color: '#8FB8A8', birthday: '2000-10-26' },
+        { id: 'u3', nickname: '小C', color: '#A9A2D4', birthday: '2000-12-09' },
       ],
     },
     {
       id: 'g2', name: '旅行搭子', emoji: '🚞', inviteCode: 'DEMO-3F7M',
       members: [
-        { id: 'u1', nickname: '小鹿', color: '#E9A59C', birthday: '2000-11-18' },
-        { id: 'u3', nickname: '小熊', color: '#A9A2D4', birthday: '2000-12-09' },
+        { id: 'u1', nickname: '小A', color: '#E9A59C', birthday: '2000-11-18' },
+        { id: 'u3', nickname: '小C', color: '#A9A2D4', birthday: '2000-12-09' },
       ],
     },
   ],
